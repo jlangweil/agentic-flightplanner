@@ -4,7 +4,7 @@ ANTHROPIC_API_KEY=putyouranthropickeyhere
 # FAA NOTAM API (free at https://api.faa.gov)
 FAA_CLIENT_ID=your_client_id_here
 FAA_CLIENT_SECRET=your_client_secret_here
-
+USE_REACT_ANALYZER=true
 # Database
 # SQLite (default — zero setup):
 DATABASE_URL=sqlite:///./data/dispatcher.db

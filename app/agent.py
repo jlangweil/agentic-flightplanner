@@ -1,10 +1,10 @@
-import os
+import sqlite3
 from langgraph.graph import StateGraph, END
 from langgraph.checkpoint.sqlite import SqliteSaver
+from app.config import settings
 from app.state import BriefingState
 from app.nodes import (
     planner_node,
-    analyzer_node,
     find_alternates_node,
     no_go_briefing_node,
     critic_node,
@@ -12,8 +12,8 @@ from app.nodes import (
     final_briefing_node,
 )
 from app.nodes.routing import route_after_analyzer, route_after_alternates
-from app.config import settings
-import sqlite3
+
+
 
 
 def build_graph():
@@ -28,7 +28,11 @@ def build_graph():
     graph = StateGraph(BriefingState)
 
     graph.add_node("planner",           planner_node)
-    graph.add_node("analyzer",          analyzer_node)
+    if settings.use_react_analyzer:
+        from app.nodes.analyzer_react import analyzer_react_node as analyzer
+    else:
+        from app.nodes.analyzer import analyzer_node as analyzer
+    graph.add_node("analyzer",          analyzer)
     graph.add_node("find_alternates",   find_alternates_node)
     graph.add_node("no_go_briefing",    no_go_briefing_node)
     graph.add_node("critic",            critic_node)

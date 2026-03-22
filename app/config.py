@@ -21,5 +21,8 @@ class Settings(BaseSettings):
     notam_cache_ttl_minutes: int = 30
     llm_model: str = "claude-sonnet-4-20250514"
 
+    # smarter agent
+    use_react_analyzer: bool = False
+
 # Single instance imported everywhere
 settings = Settings()

@@ -263,7 +263,7 @@ async def get_metar(icao: str) -> MetarData | None:
 
 async def get_taf(icao: str) -> TafData | None:
     """
-    Cache-aware TAF fetch.
+    Cache-aware TAF fetch with nearby airport fallback.
     """
     key = f"taf:{icao.upper()}"
     cached = get_cached(key, ttl_minutes=settings.weather_cache_ttl_minutes)
@@ -275,10 +275,34 @@ async def get_taf(icao: str) -> TafData | None:
     print(f"  [API]   TAF fetch: {icao}")
     result = await fetch_taf(icao)
 
+    # Fallback to nearest airport with a TAF
+    if result is None:
+        result = await fetch_nearest_taf(icao)
+
     if result:
         set_cached(key, result.model_dump_json())
 
     return result
+
+async def fetch_nearest_taf(icao: str, radius_nm: float = 15) -> TafData | None:
+    """
+    Fetch TAF for the nearest airport that has one within radius_nm.
+    Used as fallback when the requested airport has no TAF.
+    """
+    from app.airport_db import find_alternates, get_airport
+
+    candidates = find_alternates(icao, radius_nm=radius_nm, min_runway_ft=3000)
+
+    for candidate_icao in candidates:
+        taf = await fetch_taf(candidate_icao)
+        if taf:
+            print(f"  [TAF] {icao} has no TAF — using {candidate_icao} "
+                  f"(within {radius_nm}nm)")
+            # Tag the TAF so downstream knows it's a proxy
+            taf.icao = f"{candidate_icao} (proxy for {icao})"
+            return taf
+
+    return None
 
 
 # ── Public fetch functions ──────────────────────────────────────────────────
