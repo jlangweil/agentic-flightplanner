@@ -19,6 +19,10 @@ class BriefingState(TypedDict):
     true_airspeed_kts: Optional[float]
     is_ifr: Optional[bool]
     is_night: Optional[bool]
+    # Night currency
+    is_night_current: Optional[bool]
+    departure_offset_minutes: Optional[float]   # minutes from now
+    night_currency_check: Optional[str]          # output of the tool
 
     # ── Discovered during execution ────────────────────────────────────────
     # Raw tool outputs stored as JSON strings for the LLM to read
@@ -45,6 +49,8 @@ class BriefingState(TypedDict):
 
     # Set by the human checkpoint
     human_approved: bool
+
+    carrying_passengers: Optional[bool]
 
     # ── Final output ───────────────────────────────────────────────────────
     go_no_go: Optional[str]        # "GO" | "NO-GO" | "MARGINAL"
@@ -85,4 +91,8 @@ def initial_state(query: str) -> BriefingState:
         go_no_go=None,
         briefing=None,
         messages=[],
+        is_night_current=None,
+        departure_offset_minutes=None,
+        night_currency_check=None,
+        carrying_passengers=None,
     )

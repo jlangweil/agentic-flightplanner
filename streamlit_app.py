@@ -203,6 +203,12 @@ elif st.session_state.phase == "running":
                 "**Alternates:**",
                 f"```\n{v.get('alternates')}\n```",
             ]
+        if v.get("night_currency_check"):
+            parts += [
+                "",
+                "**Night Currency Check:**",
+                f"```\n{v.get('night_currency_check')}\n```",
+            ]
         st.session_state.assessment = "\n".join(parts)
         st.session_state.phase      = "awaiting"
     else:

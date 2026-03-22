@@ -81,6 +81,7 @@ def final_briefing_node(state: BriefingState) -> dict:
         ("Risk Assessment",     "risk_assessment"),
         ("Fuel Analysis",       "fuel_analysis"),
         ("Critic Feedback",     "critic_feedback"),
+        ("Night Currency Check", "night_currency_check"),
     ]:
         value = state.get(key)
         if value:

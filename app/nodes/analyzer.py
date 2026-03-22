@@ -3,6 +3,8 @@ from app.state import BriefingState
 from app.fetchers import get_metar, get_taf, fetch_notams
 from app.tools.risk import score_risk_tool
 from app.tools.fuel import calculate_fuel_tool
+from app.tools.sunset import check_night_currency_tool
+from datetime import datetime, timezone, timedelta
 
 
 async def _fetch_airport_data(icao: str) -> tuple[str, str, str]:
@@ -94,6 +96,45 @@ def analyzer_node(state: BriefingState) -> dict:
             })
             print(f"  [Analyzer] Fuel result:\n{fuel_result}")
 
+    # Night currency check
+    night_currency_result = ""
+    departure_offset = state.get("departure_offset_minutes")
+    is_night_current = state.get("is_night_current")
+
+    if departure_offset is not None or is_night_current is not None:
+        from datetime import datetime, timezone, timedelta
+
+        # Always calculate departure_time before using it
+        now = datetime.now(timezone.utc)
+        offset = departure_offset if departure_offset is not None else 0
+        departure_time = now + timedelta(minutes=offset)
+
+        # Estimate flight time from fuel calc
+        flight_time_min = 60.0
+        if state.get("fuel_analysis"):
+            for line in state["fuel_analysis"].splitlines():
+                if "Flight time:" in line:
+                    try:
+                        flight_time_min = float(
+                            line.split(":")[1].strip().split()[0]
+                        )
+                    except (ValueError, IndexError):
+                        pass
+
+        night_currency_result = check_night_currency_tool.invoke({
+            "icao": destination,
+            "departure_time_utc": departure_time.isoformat(),
+            "flight_time_minutes": flight_time_min,
+            "is_night_current": is_night_current
+                if is_night_current is not None else True,
+            "carrying_passengers": state.get("carrying_passengers") or False,
+        })
+
+        print(f"  [Analyzer] Night currency:\n{night_currency_result}")
+
+        if "WARNING" in night_currency_result:
+            print("  [Analyzer] Night currency warning flagged")
+
     return {
         "departure_metar":          dep_metar,
         "departure_taf":            dep_taf,
@@ -105,6 +146,7 @@ def analyzer_node(state: BriefingState) -> dict:
         "fuel_analysis":            fuel_result,
         "destination_is_unusable":  destination_is_unusable,
         "reason_unusable":          reason_unusable,
+        "night_currency_check": night_currency_result,
     }
 
 

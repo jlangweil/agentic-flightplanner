@@ -15,15 +15,29 @@ Extract the following and return as JSON only, no other text:
     "fuel_burn_gph": null or number,
     "true_airspeed_kts": null or number,
     "is_ifr": null or boolean,
-    "is_night": null or boolean
+    "is_night": null or boolean,
+    "is_night_current": null or boolean,
+    "departure_offset_minutes": null or number
+    "carrying_passengers": null or boolean
 }
 
 Rules:
-- Convert airport names to ICAO codes. Morristown NJ = KMMU, Block Island = KBID.
+- Convert airport names to ICAO codes. Morristown NJ = KMMU, 
+  Block Island = KBID, Caldwell NJ = KCDW, Teterboro = KTEB.
 - If the pilot says "IFR flight plan" or "on an IFR" set is_ifr to true.
 - If the pilot mentions night, dusk, or after sunset set is_night to true.
+- If the pilot says "not night current" or "no night currency" set 
+  is_night_current to false. If they say they are night current set to true.
+  If not mentioned set to null.
+- departure_offset_minutes: extract how many minutes from now they want 
+  to leave. "leaving now" = 0, "in 1 hour" = 60, "in 30 minutes" = 30,
+  "this afternoon at 3pm" = calculate from current time if possible,
+  otherwise null.
 - If a value is not mentioned, use null.
 - Return valid JSON only. No explanation, no markdown.
+- If the pilot mentions passengers, carrying people, or flying with someone 
+  set carrying_passengers to true. If explicitly solo set to false. 
+  If not mentioned set to null.
 """
 
 
@@ -73,4 +87,8 @@ def planner_node(state: BriefingState) -> dict:
         "true_airspeed_kts": extracted.get("true_airspeed_kts"),
         "is_ifr":            extracted.get("is_ifr"),
         "is_night":          extracted.get("is_night"),
+        "is_night_current":         extracted.get("is_night_current"),
+        "departure_offset_minutes": extracted.get("departure_offset_minutes"),
+        "carrying_passengers":      extracted.get("carrying_passengers"),
+        
     }

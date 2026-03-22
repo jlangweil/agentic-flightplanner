@@ -1,0 +1,15 @@
+# Anthropic
+ANTHROPIC_API_KEY=putyouranthropickeyhere
+
+# FAA NOTAM API (free at https://api.faa.gov)
+FAA_CLIENT_ID=your_client_id_here
+FAA_CLIENT_SECRET=your_client_secret_here
+
+# Database
+# SQLite (default — zero setup):
+DATABASE_URL=sqlite:///./data/dispatcher.db
+# PostgreSQL (swap in if you have a server):
+# DATABASE_URL=postgresql://user:password@host:5432/dbname
+# MySQL:
+# DATABASE_URL=mysql+pymysql://user:password@host:3306/dbname
+EOF
