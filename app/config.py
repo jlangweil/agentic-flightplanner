@@ -14,7 +14,7 @@ class Settings(BaseSettings):
     faa_client_secret: str = ""
 
     # Database
-    database_url: str = "postgresql://neondb_owner:npg_Rmgi0QkAc2wo@ep-long-grass-amoulbjq-pooler.c-5.us-east-1.aws.neon.tech/neondb?sslmode=require&channel_binding=require"
+    database_url: str = ""
 
     # Agent behavior
     weather_cache_ttl_minutes: int = 60
