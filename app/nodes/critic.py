@@ -3,19 +3,20 @@ from langchain_core.messages import HumanMessage, SystemMessage
 from app.state import BriefingState
 from app.config import settings
 
-CRITIC_SYSTEM = """You are a senior certificated flight instructor (CFII) and 
+CRITIC_SYSTEM = """You are a senior certificated flight instructor (CFII) and
 aviation safety expert conducting a pre-flight briefing review.
 
 You will be given a flight plan summary including:
 - Departure and destination airports
-- Current weather (METAR) at both airports  
+- Current weather (METAR) at both airports
 - TAF forecast at both airports
 - NOTAMs at both airports
+- En-route weather at corridor airports (METAR/TAF or GFS MOS depending on horizon)
 - Risk assessment score and factors
 - Fuel analysis
 - Any alternate airports found
 
-Your job is to critically review this information and identify anything 
+Your job is to critically review this information and identify anything
 that was missed, understated, or that warrants extra caution.
 
 You must respond in this exact format:
@@ -36,11 +37,34 @@ Rules:
 - Think like a CFII who cares about keeping pilots alive, not just legal
 - Pay special attention to: deteriorating TAF trends, marginal fuel margins,
   NOTAMs affecting the planned approach, night currency, and icing potential
-- If the pilot mentions not being night current, explicitly verify whether 
-  the ETA at destination is before or after end of civil twilight. 
+- If the pilot mentions not being night current, explicitly verify whether
+  the ETA at destination is before or after end of civil twilight.
   If the night currency check shows a NO-GO, you must DISAGREE.
-- A flight that departs VFR and arrives after civil twilight end with a 
-  non-night-current pilot is a hard NO-GO regardless of weather, unless they have an CFI onboard.
+- A flight that departs VFR and arrives after civil twilight end with a
+  non-night-current pilot is a hard NO-GO regardless of weather, unless they have a CFI onboard.
+
+FORECAST HORIZON RULES — apply these based on what the en-route weather section reports:
+
+  METAR_TAF horizon (0-30h out):
+  - Current conditions are meaningful. Treat METAR/TAF data at full face value.
+  - If any en-route airport shows IFR or LIFR, flag it explicitly as a concern.
+  - MVFR en-route on a VFR flight warrants at least CAUTION.
+
+  GFS_MOS horizon (30-72h out):
+  - Only statistical model guidance (GFS MOS) is available — not certified TAFs.
+  - MOS accuracy degrades beyond 48h. Treat forecasts as probabilistic, not definitive.
+  - If MOS shows IFR or LIFR anywhere en-route, issue a CAUTION (not necessarily DISAGREE).
+  - Always remind the pilot: re-brief with METAR/TAF within 24h of departure.
+  - Do NOT issue AGREE without noting the reduced forecast reliability.
+
+  NO_FORECAST horizon (>72h out):
+  - No aviation weather product covers this departure window.
+  - You MUST list this as a CONCERN: "Departure is beyond reliable forecast range
+    (>72h). No METAR, TAF, or MOS product covers this window. A go/no-go decision
+    cannot be made at this time — re-brief within 72h of planned departure."
+  - Set VERDICT: CAUTION at minimum. If the pilot is treating this as a final
+    go/no-go decision, set VERDICT: DISAGREE and explain why pre-departure planning
+    at this range is premature.
 """
 
 
@@ -51,9 +75,20 @@ def _build_critic_prompt(state: BriefingState) -> str:
     is_ifr = state.get("is_ifr") or False
     is_night = state.get("is_night") or False
 
+    offset = state.get("departure_offset_minutes")
+    if offset is None:
+        horizon_note = "Departure timing: not specified (treat as immediate)"
+    elif offset > 4320:
+        horizon_note = f"Departure timing: {offset/60:.0f}h from now — NO_FORECAST horizon (>72h)"
+    elif offset > 1800:
+        horizon_note = f"Departure timing: {offset/60:.0f}h from now — GFS_MOS horizon (30-72h)"
+    else:
+        horizon_note = f"Departure timing: {offset/60:.0f}h from now — METAR_TAF horizon (<30h)"
+
     sections = [
-        f"FLIGHT: {departure} → {destination}",
+        f"FLIGHT: {departure} -> {destination}",
         f"IFR: {is_ifr}  Night: {is_night}",
+        f"Forecast horizon: {horizon_note}",
         "",
     ]
 
@@ -74,6 +109,9 @@ def _build_critic_prompt(state: BriefingState) -> str:
 
     if state.get("destination_notams"):
         sections += ["DESTINATION NOTAMs:", state["destination_notams"], ""]
+
+    if state.get("route_weather"):
+        sections += ["EN-ROUTE WEATHER:", state["route_weather"], ""]
 
     if state.get("alternates"):
         sections += ["ALTERNATES:", state["alternates"], ""]

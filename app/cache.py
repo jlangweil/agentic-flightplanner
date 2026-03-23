@@ -3,11 +3,13 @@ from sqlalchemy import create_engine, Column, String, Text, DateTime
 from sqlalchemy.orm import DeclarativeBase, Session
 from app.config import settings
 
-engine = create_engine(
-    settings.database_url,
-    connect_args={"check_same_thread": False}  # SQLite only — ignored by Postgres/MySQL
-    if settings.database_url.startswith("sqlite") else {},
-)
+# Ensure SQLAlchemy uses psycopg v3 for postgres URLs
+_db_url = settings.database_url
+if _db_url.startswith("postgresql://") or _db_url.startswith("postgres://"):
+    _db_url = _db_url.replace("postgresql://", "postgresql+psycopg://", 1)
+    _db_url = _db_url.replace("postgres://", "postgresql+psycopg://", 1)
+
+engine = create_engine(_db_url)
 
 
 class Base(DeclarativeBase):

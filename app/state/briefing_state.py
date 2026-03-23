@@ -37,9 +37,20 @@ class BriefingState(TypedDict):
     # Alternate airports found if destination is unusable
     alternates: Optional[str]
 
+    # PIREPs along the route corridor
+    pireps: Optional[str]
+
+    # SIGMETs / AIRMETs
+    sigmets: Optional[str]
+
+    # En-route weather at airports along the corridor
+    route_weather: Optional[str]
+
     # ── Analysis outputs ───────────────────────────────────────────────────
     fuel_analysis: Optional[str]
     risk_assessment: Optional[str]
+    crosswind_analysis: Optional[str]
+    winds_aloft: Optional[str]
     critic_feedback: Optional[str]
 
     # ── Control flow flags ─────────────────────────────────────────────────
@@ -51,6 +62,11 @@ class BriefingState(TypedDict):
     human_approved: bool
 
     carrying_passengers: Optional[bool]
+
+    # ── Pilot qualifications ────────────────────────────────────────────────
+    ifr_current: Optional[bool]              # has done 6 approaches/holds in past 6 months
+    personal_min_ceiling_ft: Optional[int]   # pilot's personal minimums — ceiling
+    personal_min_vis_sm: Optional[float]     # pilot's personal minimums — visibility
 
     # ── Final output ───────────────────────────────────────────────────────
     go_no_go: Optional[str]        # "GO" | "NO-GO" | "MARGINAL"
@@ -82,8 +98,13 @@ def initial_state(query: str) -> BriefingState:
         destination_taf=None,
         destination_notams=None,
         alternates=None,
+        pireps=None,
+        sigmets=None,
+        route_weather=None,
         fuel_analysis=None,
         risk_assessment=None,
+        crosswind_analysis=None,
+        winds_aloft=None,
         critic_feedback=None,
         destination_is_unusable=False,
         reason_unusable=None,
@@ -95,4 +116,7 @@ def initial_state(query: str) -> BriefingState:
         departure_offset_minutes=None,
         night_currency_check=None,
         carrying_passengers=None,
+        ifr_current=None,
+        personal_min_ceiling_ft=None,
+        personal_min_vis_sm=None,
     )

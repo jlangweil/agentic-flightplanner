@@ -1,6 +1,6 @@
-import sqlite3
+import psycopg
 from langgraph.graph import StateGraph, END
-from langgraph.checkpoint.sqlite import SqliteSaver
+from langgraph.checkpoint.postgres import PostgresSaver
 from app.config import settings
 from app.state import BriefingState
 from app.nodes import (
@@ -14,16 +14,10 @@ from app.nodes import (
 from app.nodes.routing import route_after_analyzer, route_after_alternates
 
 
-
-
 def build_graph():
-    db_path = (
-        settings.database_url
-        .replace("sqlite:///", "")
-        .replace("./", "")
-    )
-    conn = sqlite3.connect(db_path, check_same_thread=False)
-    checkpointer = SqliteSaver(conn)
+    conn = psycopg.connect(settings.database_url, autocommit=True)
+    checkpointer = PostgresSaver(conn)
+    checkpointer.setup()   # creates checkpoint tables if they don't exist
 
     graph = StateGraph(BriefingState)
 
@@ -75,4 +69,3 @@ def build_graph():
 dispatcher = build_graph()
 
 print(f"  [Agent] Compiled graph interrupt_before: {dispatcher.config_specs}")
-

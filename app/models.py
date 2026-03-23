@@ -55,3 +55,56 @@ class NotamData(BaseModel):
     translated_text: Optional[str] = None
     category: Optional[str] = None      # RWY, NAV, COM, AIRSPACE, etc.
     is_critical: bool = False           # Runway closure, ILS out, etc.
+
+
+class PirepData(BaseModel):
+    icao: str
+    raw: str
+    obs_time: Optional[str] = None
+    lat: Optional[float] = None
+    lon: Optional[float] = None
+    altitude_ft: Optional[int] = None        # fltLvl * 100
+    aircraft_type: Optional[str] = None
+    turbulence_intensity: Optional[str] = None   # NEG, LGT, MOD, SEV, EXTRM
+    turbulence_base_ft: Optional[int] = None
+    turbulence_top_ft: Optional[int] = None
+    icing_intensity: Optional[str] = None        # NEG, LGT, MOD, SEV
+    icing_type: Optional[str] = None             # RIME, CLEAR, MIXED
+    icing_base_ft: Optional[int] = None
+    icing_top_ft: Optional[int] = None
+    temp_c: Optional[float] = None
+    wind_dir: Optional[int] = None
+    wind_speed_kts: Optional[int] = None
+    visibility_sm: Optional[float] = None
+    wx_string: Optional[str] = None
+    pirep_type: str = "PIREP"
+
+
+class WindsAloftStation(BaseModel):
+    """Winds aloft forecast for one altitude level at one station."""
+    station_id: str
+    valid_time: Optional[str] = None
+    altitude_ft: int                     # pressure altitude (3000–45000 ft)
+    wind_dir: Optional[int] = None       # degrees true; None = calm/light
+    wind_speed_kts: Optional[int] = None
+    temp_c: Optional[float] = None
+
+
+class MosPeriod(BaseModel):
+    """One forecast period from a GFS MOS JSON response."""
+    ftime: str                          # forecast valid time string from API
+    tmp: Optional[int] = None           # temperature (°F)
+    dpt: Optional[int] = None           # dew point (°F)
+    wdr: Optional[int] = None           # wind direction (degrees, 0 = calm)
+    wsp: Optional[int] = None           # wind speed (knots)
+    sky: Optional[int] = None           # sky cover code 0–8
+    cld: Optional[str] = None           # CLR / SCT / BKN / OVC
+    vis: Optional[int] = None           # visibility code 0–8
+    cig: Optional[int] = None           # ceiling code 0–10
+
+
+class MosData(BaseModel):
+    """GFS MOS forecast for one station."""
+    station_id: str
+    model_time: Optional[str] = None    # model run time string
+    periods: list[MosPeriod] = Field(default_factory=list)

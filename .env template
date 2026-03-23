@@ -5,11 +5,6 @@ ANTHROPIC_API_KEY=putyouranthropickeyhere
 FAA_CLIENT_ID=your_client_id_here
 FAA_CLIENT_SECRET=your_client_secret_here
 USE_REACT_ANALYZER=true
-# Database
-# SQLite (default — zero setup):
-DATABASE_URL=sqlite:///./data/dispatcher.db
-# PostgreSQL (swap in if you have a server):
-# DATABASE_URL=postgresql://user:password@host:5432/dbname
-# MySQL:
-# DATABASE_URL=mysql+pymysql://user:password@host:3306/dbname
+# Database (PostgreSQL)
+DATABASE_URL=postgresql://neondb_owner:npg_Rmgi0QkAc2wo@ep-long-grass-amoulbjq-pooler.c-5.us-east-1.aws.neon.tech/neondb?sslmode=require&channel_binding=require
 EOF

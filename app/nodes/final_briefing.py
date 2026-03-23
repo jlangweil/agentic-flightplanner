@@ -3,17 +3,17 @@ from langchain_core.messages import HumanMessage, SystemMessage
 from app.state import BriefingState
 from app.config import settings
 
-BRIEFING_SYSTEM = """You are a professional aviation dispatcher generating 
+BRIEFING_SYSTEM = """You are a professional aviation dispatcher generating
 a formal pre-flight briefing document.
 
-Given all available flight data, generate a complete, well-structured 
+Given all available flight data, generate a complete, well-structured
 pre-flight briefing. Use clear aviation language. Be concise but thorough.
 
 Structure your briefing exactly as follows:
 
 PRE-FLIGHT BRIEFING
 ===================
-Route:     [DEPARTURE] → [DESTINATION]  
+Route:     [DEPARTURE] → [DESTINATION]
 Date/Time: [from weather observation time]
 Verdict:   [GO / NO-GO / MARGINAL]
 
@@ -26,6 +26,28 @@ Forecast: [TAF highlights]
 RISK FACTORS
 ------------
 [List any risk factors, or "None identified"]
+
+CROSSWIND ANALYSIS
+------------------
+[Crosswind component on best runway vs aircraft limit, or "N/A — calm/no data"]
+
+WINDS ALOFT
+-----------
+[Wind component at cruise altitude, adjusted ground speed and flight time impact]
+
+PIREPS
+------
+[Pilot reports of turbulence/icing along route, or "No recent reports"]
+
+SIGMETS / AIRMETS
+-----------------
+[Active advisories, or "No active advisories"]
+
+EN-ROUTE WEATHER
+----------------
+[Weather at airports along the corridor, forecast product used, worst category,
+ or "N/A — no en-route airports in corridor" for very short/direct routes.
+ If NO_FORECAST horizon: state that and advise re-briefing within 72h.]
 
 FUEL ANALYSIS
 -------------
@@ -71,16 +93,21 @@ def final_briefing_node(state: BriefingState) -> dict:
     ]
 
     for label, key in [
-        ("Departure METAR",     "departure_metar"),
-        ("Departure TAF",       "departure_taf"),
-        ("Departure NOTAMs",    "departure_notams"),
-        ("Destination METAR",   "destination_metar"),
-        ("Destination TAF",     "destination_taf"),
-        ("Destination NOTAMs",  "destination_notams"),
-        ("Alternates",          "alternates"),
-        ("Risk Assessment",     "risk_assessment"),
-        ("Fuel Analysis",       "fuel_analysis"),
-        ("Critic Feedback",     "critic_feedback"),
+        ("Departure METAR",      "departure_metar"),
+        ("Departure TAF",        "departure_taf"),
+        ("Departure NOTAMs",     "departure_notams"),
+        ("Destination METAR",    "destination_metar"),
+        ("Destination TAF",      "destination_taf"),
+        ("Destination NOTAMs",   "destination_notams"),
+        ("PIREPs",               "pireps"),
+        ("SIGMETs/AIRMETs",      "sigmets"),
+        ("En-Route Weather",     "route_weather"),
+        ("Alternates",           "alternates"),
+        ("Risk Assessment",      "risk_assessment"),
+        ("Crosswind Analysis",   "crosswind_analysis"),
+        ("Winds Aloft",          "winds_aloft"),
+        ("Fuel Analysis",        "fuel_analysis"),
+        ("Critic Feedback",      "critic_feedback"),
         ("Night Currency Check", "night_currency_check"),
     ]:
         value = state.get(key)
